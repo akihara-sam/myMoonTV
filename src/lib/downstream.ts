@@ -15,6 +15,27 @@ interface ApiSearchItem {
   type_name?: string;
 }
 
+function normalizePosterUrl(poster: string | undefined, apiBaseUrl: string) {
+  if (!poster) return '';
+
+  const trimmedPoster = poster.trim();
+  if (!trimmedPoster) return '';
+
+  if (/^https?:\/\//i.test(trimmedPoster)) {
+    return trimmedPoster;
+  }
+
+  if (trimmedPoster.startsWith('//')) {
+    return `https:${trimmedPoster}`;
+  }
+
+  try {
+    return new URL(trimmedPoster, apiBaseUrl).toString();
+  } catch {
+    return trimmedPoster;
+  }
+}
+
 export async function searchFromApi(
   apiSite: ApiSite,
   query: string
@@ -83,7 +104,7 @@ export async function searchFromApi(
       return {
         id: item.vod_id.toString(),
         title: item.vod_name.trim().replace(/\s+/g, ' '),
-        poster: item.vod_pic,
+        poster: normalizePosterUrl(item.vod_pic, apiBaseUrl),
         episodes,
         episodes_titles: titles,
         source: apiSite.key,
@@ -172,7 +193,7 @@ export async function searchFromApi(
               return {
                 id: item.vod_id.toString(),
                 title: item.vod_name.trim().replace(/\s+/g, ' '),
-                poster: item.vod_pic,
+                poster: normalizePosterUrl(item.vod_pic, apiBaseUrl),
                 episodes,
                 episodes_titles: titles,
                 source: apiSite.key,
@@ -288,7 +309,7 @@ export async function getDetailFromApi(
   return {
     id: id.toString(),
     title: videoDetail.vod_name,
-    poster: videoDetail.vod_pic,
+    poster: normalizePosterUrl(videoDetail.vod_pic, apiSite.api),
     episodes,
     episodes_titles: titles,
     source: apiSite.key,
